@@ -302,50 +302,50 @@
             padding: 6rem 2rem;
         }
 
-        .formats-table {
-            width: 100%;
-            border-collapse: collapse;
+        .formats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+            gap: 0.75rem;
+        }
+
+        .format-card {
             background: var(--bg-card);
-            border-radius: 12px;
-            overflow: hidden;
             border: 1px solid var(--border);
+            border-radius: 10px;
+            padding: 1rem;
+            text-align: center;
+            transition: all 0.2s;
         }
 
-        .formats-table th,
-        .formats-table td {
-            padding: 1rem 1.25rem;
-            text-align: left;
-            border-bottom: 1px solid var(--border);
+        .format-card:hover {
+            border-color: var(--accent);
+            transform: translateY(-2px);
+            box-shadow: 0 8px 20px rgba(0,0,0,0.2);
         }
 
-        .formats-table th {
-            background: var(--bg-surface);
-            color: var(--text-dim);
-            font-weight: 500;
+        .format-icon {
+            font-size: 1.5rem;
+            margin-bottom: 0.5rem;
+        }
+
+        .format-name {
             font-size: 0.85rem;
-            text-transform: uppercase;
-            letter-spacing: 0.05em;
-        }
-
-        .formats-table tr:last-child td {
-            border-bottom: none;
-        }
-
-        .formats-table tr:hover td {
-            background: var(--accent-glow);
+            font-weight: 500;
+            margin-bottom: 0.25rem;
         }
 
         .format-ext {
             color: var(--accent);
             font-family: 'JetBrains Mono', monospace;
-            font-size: 0.85rem;
+            font-size: 0.7rem;
+            margin-bottom: 0.5rem;
         }
 
         .format-badge {
             display: inline-block;
-            padding: 0.25rem 0.6rem;
+            padding: 0.15rem 0.4rem;
             border-radius: 4px;
-            font-size: 0.75rem;
+            font-size: 0.65rem;
             font-weight: 500;
         }
 
@@ -357,6 +357,12 @@
         .format-badge.ai {
             background: rgba(0, 212, 170, 0.15);
             color: var(--accent);
+        }
+
+        .format-lib {
+            font-size: 0.65rem;
+            color: var(--text-muted);
+            margin-top: 0.35rem;
         }
 
         /* ========== 演示区域 ========== */
@@ -896,96 +902,99 @@
                 <h2>支持的文件格式</h2>
                 <p>30+ 种文件格式，覆盖常见场景</p>
             </div>
-            <table class="formats-table">
-                <thead>
-                    <tr>
-                        <th>类型</th>
-                        <th>扩展名</th>
-                        <th>解析方式</th>
-                        <th>使用的库</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    <tr>
-                        <td>Excel</td>
-                        <td><span class="format-ext">.xlsx .xls</span></td>
-                        <td><span class="format-badge local">本地解析</span></td>
-                        <td>xlsx</td>
-                    </tr>
-                    <tr>
-                        <td>CSV</td>
-                        <td><span class="format-ext">.csv</span></td>
-                        <td><span class="format-badge local">本地解析</span></td>
-                        <td>内置</td>
-                    </tr>
-                    <tr>
-                        <td>Word</td>
-                        <td><span class="format-ext">.docx</span></td>
-                        <td><span class="format-badge local">本地解析</span></td>
-                        <td>mammoth</td>
-                    </tr>
-                    <tr>
-                        <td>PDF</td>
-                        <td><span class="format-ext">.pdf</span></td>
-                        <td><span class="format-badge local">本地解析</span></td>
-                        <td>pdf-parse</td>
-                    </tr>
-                    <tr>
-                        <td>JSON</td>
-                        <td><span class="format-ext">.json</span></td>
-                        <td><span class="format-badge local">本地解析</span></td>
-                        <td>内置</td>
-                    </tr>
-                    <tr>
-                        <td>YAML</td>
-                        <td><span class="format-ext">.yaml .yml</span></td>
-                        <td><span class="format-badge local">本地解析</span></td>
-                        <td>js-yaml</td>
-                    </tr>
-                    <tr>
-                        <td>XML</td>
-                        <td><span class="format-ext">.xml</span></td>
-                        <td><span class="format-badge local">本地解析</span></td>
-                        <td>xml2js</td>
-                    </tr>
-                    <tr>
-                        <td>HTML</td>
-                        <td><span class="format-ext">.html .htm</span></td>
-                        <td><span class="format-badge local">本地解析</span></td>
-                        <td>cheerio</td>
-                    </tr>
-                    <tr>
-                        <td>Markdown</td>
-                        <td><span class="format-ext">.md .markdown</span></td>
-                        <td><span class="format-badge local">本地解析</span></td>
-                        <td>内置</td>
-                    </tr>
-                    <tr>
-                        <td>纯文本</td>
-                        <td><span class="format-ext">.txt .rtf</span></td>
-                        <td><span class="format-badge local">本地解析</span></td>
-                        <td>内置</td>
-                    </tr>
-                    <tr>
-                        <td>图片</td>
-                        <td><span class="format-ext">.jpg .png .gif .webp .bmp .svg</span></td>
-                        <td><span class="format-badge ai">AI 识别</span></td>
-                        <td>OpenAI / Gemini / Claude</td>
-                    </tr>
-                    <tr>
-                        <td>音频</td>
-                        <td><span class="format-ext">.mp3 .wav .ogg .m4a</span></td>
-                        <td><span class="format-badge ai">AI 转写</span></td>
-                        <td>OpenAI / Gemini / Claude</td>
-                    </tr>
-                    <tr>
-                        <td>视频</td>
-                        <td><span class="format-ext">.mp4 .avi .mov .webm</span></td>
-                        <td><span class="format-badge ai">AI 识别</span></td>
-                        <td>OpenAI / Gemini / Claude</td>
-                    </tr>
-                </tbody>
-            </table>
+            <div class="formats-grid">
+                <div class="format-card">
+                    <div class="format-icon">📊</div>
+                    <div class="format-name">Excel</div>
+                    <div class="format-ext">.xlsx .xls</div>
+                    <span class="format-badge local">本地</span>
+                    <div class="format-lib">xlsx</div>
+                </div>
+                <div class="format-card">
+                    <div class="format-icon">📋</div>
+                    <div class="format-name">CSV</div>
+                    <div class="format-ext">.csv</div>
+                    <span class="format-badge local">本地</span>
+                    <div class="format-lib">内置</div>
+                </div>
+                <div class="format-card">
+                    <div class="format-icon">📝</div>
+                    <div class="format-name">Word</div>
+                    <div class="format-ext">.docx</div>
+                    <span class="format-badge local">本地</span>
+                    <div class="format-lib">mammoth</div>
+                </div>
+                <div class="format-card">
+                    <div class="format-icon">📄</div>
+                    <div class="format-name">PDF</div>
+                    <div class="format-ext">.pdf</div>
+                    <span class="format-badge local">本地</span>
+                    <div class="format-lib">pdf-parse</div>
+                </div>
+                <div class="format-card">
+                    <div class="format-icon">{ }</div>
+                    <div class="format-name">JSON</div>
+                    <div class="format-ext">.json</div>
+                    <span class="format-badge local">本地</span>
+                    <div class="format-lib">内置</div>
+                </div>
+                <div class="format-card">
+                    <div class="format-icon">⚙️</div>
+                    <div class="format-name">YAML</div>
+                    <div class="format-ext">.yaml .yml</div>
+                    <span class="format-badge local">本地</span>
+                    <div class="format-lib">js-yaml</div>
+                </div>
+                <div class="format-card">
+                    <div class="format-icon">&lt;/&gt;</div>
+                    <div class="format-name">XML</div>
+                    <div class="format-ext">.xml</div>
+                    <span class="format-badge local">本地</span>
+                    <div class="format-lib">xml2js</div>
+                </div>
+                <div class="format-card">
+                    <div class="format-icon">🌐</div>
+                    <div class="format-name">HTML</div>
+                    <div class="format-ext">.html .htm</div>
+                    <span class="format-badge local">本地</span>
+                    <div class="format-lib">cheerio</div>
+                </div>
+                <div class="format-card">
+                    <div class="format-icon">#</div>
+                    <div class="format-name">Markdown</div>
+                    <div class="format-ext">.md</div>
+                    <span class="format-badge local">本地</span>
+                    <div class="format-lib">内置</div>
+                </div>
+                <div class="format-card">
+                    <div class="format-icon">📃</div>
+                    <div class="format-name">纯文本</div>
+                    <div class="format-ext">.txt .rtf</div>
+                    <span class="format-badge local">本地</span>
+                    <div class="format-lib">内置</div>
+                </div>
+                <div class="format-card">
+                    <div class="format-icon">🖼️</div>
+                    <div class="format-name">图片</div>
+                    <div class="format-ext">.jpg .png .gif</div>
+                    <span class="format-badge ai">AI</span>
+                    <div class="format-lib">GPT-4o</div>
+                </div>
+                <div class="format-card">
+                    <div class="format-icon">🎵</div>
+                    <div class="format-name">音频</div>
+                    <div class="format-ext">.mp3 .wav</div>
+                    <span class="format-badge ai">AI</span>
+                    <div class="format-lib">Whisper</div>
+                </div>
+                <div class="format-card">
+                    <div class="format-icon">🎬</div>
+                    <div class="format-name">视频</div>
+                    <div class="format-ext">.mp4 .mov</div>
+                    <span class="format-badge ai">AI</span>
+                    <div class="format-lib">GPT-4o</div>
+                </div>
+            </div>
         </div>
     </section>
 
