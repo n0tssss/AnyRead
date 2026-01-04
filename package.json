@@ -1,0 +1,73 @@
+{
+  "name": "@n0ts123/anyread",
+  "version": "1.0.0",
+  "description": "读取任意文件格式 - Excel、CSV、Word、图片、PDF，本地解析 + AI 识别，支持并发",
+  "main": "dist/index.js",
+  "module": "dist/index.mjs",
+  "types": "dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.mjs",
+      "require": "./dist/index.js"
+    }
+  },
+  "files": [
+    "dist",
+    "README.md"
+  ],
+  "scripts": {
+    "build": "tsup",
+    "dev": "tsup --watch",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "lint": "eslint src --ext .ts",
+    "prepublishOnly": "npm run build"
+  },
+  "keywords": [
+    "anyread",
+    "file-parser",
+    "file-reader",
+    "excel",
+    "xlsx",
+    "csv",
+    "word",
+    "docx",
+    "pdf",
+    "image",
+    "ocr",
+    "ai",
+    "vision",
+    "gpt-4",
+    "gemini",
+    "concurrent"
+  ],
+  "author": "n0ts",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": ""
+  },
+  "engines": {
+    "node": ">=18.0.0"
+  },
+  "dependencies": {
+    "axios": "^1.7.9",
+    "mammoth": "^1.8.0",
+    "xlsx": "^0.18.5"
+  },
+  "devDependencies": {
+    "@types/node": "^22.10.5",
+    "tsup": "^8.3.5",
+    "typescript": "^5.7.2",
+    "vitest": "^2.1.8"
+  },
+  "peerDependencies": {
+    "axios": ">=1.0.0"
+  },
+  "peerDependenciesMeta": {
+    "axios": {
+      "optional": true
+    }
+  }
+}

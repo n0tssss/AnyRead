@@ -1,0 +1,132 @@
+/**
+ * Excel 文件解析器 (.xlsx, .xls)
+ */
+
+import XLSX from "xlsx";
+import type { ParserConfig, ParsedFile } from "../types.js";
+
+export interface ExcelParseResult {
+    content: string;
+    metadata: {
+        sheetNames: string[];
+        rowCount: number;
+        truncated: boolean;
+    };
+}
+
+/**
+ * 解析 Excel 文件
+ */
+export function parseExcel(
+    buffer: Buffer,
+    fileName: string,
+    config?: ParserConfig["excel"]
+): ExcelParseResult {
+    const maxRows = config?.maxRows ?? 500;
+    const allSheets = config?.allSheets ?? true;
+    const outputFormat = config?.outputFormat ?? "markdown";
+
+    const workbook = XLSX.read(buffer, { type: "buffer" });
+    const sheetNames = workbook.SheetNames;
+    const sheetsToProcess = allSheets ? sheetNames : [sheetNames[0]];
+
+    let content = "";
+    let totalRows = 0;
+    let truncated = false;
+
+    for (const sheetName of sheetsToProcess) {
+        const worksheet = workbook.Sheets[sheetName];
+        const jsonData = XLSX.utils.sheet_to_json<any[]>(worksheet, { header: 1 });
+
+        if (jsonData.length === 0) continue;
+
+        const rowsToInclude = Math.min(jsonData.length, maxRows);
+        if (jsonData.length > maxRows) {
+            truncated = true;
+        }
+
+        if (outputFormat === "markdown") {
+            content += formatAsMarkdown(sheetName, jsonData, rowsToInclude);
+        } else if (outputFormat === "json") {
+            content += formatAsJSON(sheetName, jsonData, rowsToInclude);
+        } else {
+            content += formatAsCSV(jsonData, rowsToInclude);
+        }
+
+        totalRows += rowsToInclude;
+    }
+
+    return {
+        content: content.trim(),
+        metadata: {
+            sheetNames,
+            rowCount: totalRows,
+            truncated
+        }
+    };
+}
+
+function formatAsMarkdown(sheetName: string, data: any[][], maxRows: number): string {
+    let content = `\n【工作表: ${sheetName}】\n`;
+
+    if (data.length > 0) {
+        // 表头
+        const header = (data[0] || []).map((cell) =>
+            cell !== undefined && cell !== null ? String(cell).trim().replace(/\|/g, "\\|") : ""
+        );
+        content += "| " + header.join(" | ") + " |\n";
+        content += "| " + header.map(() => "---").join(" | ") + " |\n";
+
+        // 数据行
+        for (let i = 1; i < maxRows && i < data.length; i++) {
+            const row = (data[i] || []).map((cell) =>
+                cell !== undefined && cell !== null ? String(cell).trim().replace(/\|/g, "\\|") : ""
+            );
+            content += "| " + row.join(" | ") + " |\n";
+        }
+
+        if (data.length > maxRows) {
+            content += `\n... 省略了 ${data.length - maxRows} 行数据\n`;
+        }
+    }
+
+    return content + "\n";
+}
+
+function formatAsJSON(sheetName: string, data: any[][], maxRows: number): string {
+    const headers = data[0] || [];
+    const rows: Record<string, any>[] = [];
+
+    for (let i = 1; i < maxRows && i < data.length; i++) {
+        const row: Record<string, any> = {};
+        (data[i] || []).forEach((cell, idx) => {
+            const key = headers[idx] !== undefined ? String(headers[idx]) : `col${idx}`;
+            row[key] = cell;
+        });
+        rows.push(row);
+    }
+
+    return JSON.stringify({ sheet: sheetName, data: rows }, null, 2) + "\n";
+}
+
+function formatAsCSV(data: any[][], maxRows: number): string {
+    let content = "";
+
+    for (let i = 0; i < maxRows && i < data.length; i++) {
+        const row = (data[i] || []).map((cell) => {
+            if (cell === undefined || cell === null) return "";
+            const str = String(cell);
+            // 如果包含逗号、引号或换行，需要用引号包裹
+            if (str.includes(",") || str.includes('"') || str.includes("\n")) {
+                return `"${str.replace(/"/g, '""')}"`;
+            }
+            return str;
+        });
+        content += row.join(",") + "\n";
+    }
+
+    return content;
+}
+
+export default parseExcel;
+
