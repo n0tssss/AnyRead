@@ -6,8 +6,15 @@ export type FileType =
     | "csv"        // .csv
     | "word"       // .docx, .doc
     | "text"       // .txt
-    | "image"      // .jpg, .jpeg, .png, .gif, .webp, .bmp
     | "pdf"        // .pdf
+    | "json"       // .json
+    | "yaml"       // .yaml, .yml
+    | "xml"        // .xml
+    | "html"       // .html, .htm
+    | "markdown"   // .md, .markdown
+    | "image"      // .jpg, .jpeg, .png, .gif, .webp, .bmp, .svg
+    | "audio"      // .mp3, .wav, .ogg, .m4a, .flac (需 AI 转写)
+    | "video"      // .mp4, .avi, .mov, .webm (需 AI 识别)
     | "unknown";   // 其他格式
 
 /**

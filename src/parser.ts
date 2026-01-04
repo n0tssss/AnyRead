@@ -15,23 +15,61 @@ import { parseExcel } from "./parsers/excel.js";
 import { parseCSV } from "./parsers/csv.js";
 import { parseWord } from "./parsers/word.js";
 import { parseText } from "./parsers/text.js";
+import { parsePDF } from "./parsers/pdf.js";
+import { parseJSON } from "./parsers/json.js";
+import { parseYAML } from "./parsers/yaml.js";
+import { parseXML } from "./parsers/xml.js";
+import { parseHTML } from "./parsers/html.js";
+import { parseMarkdown } from "./parsers/markdown.js";
 import { createAIProvider, type AIProvider } from "./providers/index.js";
 
 // 文件扩展名映射
 const EXTENSION_MAP: Record<string, FileType> = {
+    // 表格
     ".xlsx": "excel",
     ".xls": "excel",
     ".csv": "csv",
+    // 文档
     ".docx": "word",
     ".doc": "word",
     ".txt": "text",
+    ".rtf": "text",
+    // 数据格式
+    ".json": "json",
+    ".yaml": "yaml",
+    ".yml": "yaml",
+    ".xml": "xml",
+    // 网页/标记
+    ".html": "html",
+    ".htm": "html",
+    ".md": "markdown",
+    ".markdown": "markdown",
+    // PDF
+    ".pdf": "pdf",
+    // 图片
     ".jpg": "image",
     ".jpeg": "image",
     ".png": "image",
     ".gif": "image",
     ".webp": "image",
     ".bmp": "image",
-    ".pdf": "pdf"
+    ".svg": "image",
+    ".ico": "image",
+    ".tiff": "image",
+    ".tif": "image",
+    // 音频（需 AI）
+    ".mp3": "audio",
+    ".wav": "audio",
+    ".ogg": "audio",
+    ".m4a": "audio",
+    ".flac": "audio",
+    ".aac": "audio",
+    // 视频（需 AI）
+    ".mp4": "video",
+    ".avi": "video",
+    ".mov": "video",
+    ".webm": "video",
+    ".mkv": "video"
 };
 
 /**
@@ -67,7 +105,7 @@ export class FileParser {
                         warn: "⚠️",
                         error: "❌"
                     }[level] || "📄";
-                    console.log(`${prefix} [FileParser] ${message}`, ...args);
+                    console.log(`${prefix} [AnyRead] ${message}`, ...args);
                 }
             };
         }
@@ -135,14 +173,15 @@ export class FileParser {
         this.logger("info", `解析文件: ${fileName} (${fileType})`);
 
         try {
-            // 图片：使用 AI 识别或返回链接
+            // 需要 AI 处理的类型
             if (fileType === "image") {
-                return await this.parseImage(url, fileName);
+                return await this.parseWithAI(url, fileName, "image");
             }
-
-            // PDF：使用 AI 识别或返回链接
-            if (fileType === "pdf") {
-                return await this.parsePDF(url, fileName);
+            if (fileType === "audio") {
+                return await this.parseWithAI(url, fileName, "audio");
+            }
+            if (fileType === "video") {
+                return await this.parseWithAI(url, fileName, "video");
             }
 
             // 未知格式
@@ -188,6 +227,48 @@ export class FileParser {
                     metadata = { ...metadata, ...result.metadata };
                     break;
                 }
+                case "pdf": {
+                    // PDF 优先本地解析，失败则用 AI
+                    try {
+                        const result = await parsePDF(buffer, fileName);
+                        content = result.content;
+                        metadata = { ...metadata, ...result.metadata };
+                    } catch (e) {
+                        this.logger("warn", `PDF 本地解析失败，尝试 AI: ${fileName}`);
+                        return await this.parseWithAI(url, fileName, "pdf");
+                    }
+                    break;
+                }
+                case "json": {
+                    const result = parseJSON(buffer, fileName);
+                    content = result.content;
+                    metadata = { ...metadata, ...result.metadata };
+                    break;
+                }
+                case "yaml": {
+                    const result = parseYAML(buffer, fileName);
+                    content = result.content;
+                    metadata = { ...metadata, ...result.metadata };
+                    break;
+                }
+                case "xml": {
+                    const result = await parseXML(buffer, fileName);
+                    content = result.content;
+                    metadata = { ...metadata, ...result.metadata };
+                    break;
+                }
+                case "html": {
+                    const result = parseHTML(buffer, fileName);
+                    content = result.content;
+                    metadata = { ...metadata, ...result.metadata };
+                    break;
+                }
+                case "markdown": {
+                    const result = parseMarkdown(buffer, fileName);
+                    content = result.content;
+                    metadata = { ...metadata, ...result.metadata };
+                    break;
+                }
             }
 
             this.logger("info", `解析成功: ${fileName}, 内容长度: ${content.length}`);
@@ -214,85 +295,57 @@ export class FileParser {
     }
 
     /**
-     * 解析图片
+     * 使用 AI 解析文件（图片、音频、视频、PDF）
      */
-    private async parseImage(url: string, fileName: string): Promise<ParsedFile> {
-        const imageConfig = this.config.image ?? {};
-        const enableAI = imageConfig.enableAI !== false;
+    private async parseWithAI(
+        url: string,
+        fileName: string,
+        type: "image" | "audio" | "video" | "pdf"
+    ): Promise<ParsedFile> {
+        const prompts: Record<string, string> = {
+            image: "请详细分析这张图片的内容，包括产品信息、文字、型号等。",
+            audio: "请转写并分析这段音频的内容。",
+            video: "请分析这段视频的内容，描述关键信息。",
+            pdf: "请分析这个 PDF 文档的内容，提取关键信息。"
+        };
 
-        if (enableAI && this.aiProvider) {
+        if (this.aiProvider) {
             try {
-                this.logger("info", `使用 AI 识别图片: ${fileName}`);
+                this.logger("info", `使用 AI 解析 ${type}: ${fileName}`);
                 const result = await this.aiProvider.analyzeImage({
                     imageUrl: url,
-                    prompt: imageConfig.prompt,
-                    maxTokens: imageConfig.maxTokens
+                    prompt: prompts[type],
+                    maxTokens: type === "pdf" ? 4000 : 2000
                 });
 
                 return {
                     fileName,
                     url,
-                    type: "image",
+                    type: type as FileType,
                     content: result.content,
                     success: true,
-                    metadata: {
-                        mimeType: this.guessMimeType(fileName)
-                    }
+                    metadata: { mimeType: this.guessMimeType(fileName) }
                 };
             } catch (error: any) {
-                this.logger("warn", `AI 图片识别失败: ${error.message}`);
-                // 降级：返回链接
+                this.logger("warn", `AI 解析失败: ${error.message}`);
             }
         }
 
-        // 无 AI 或识别失败：返回链接
+        // 无 AI 或失败：返回链接提示
+        const labels: Record<string, string> = {
+            image: "图片文件",
+            audio: "音频文件",
+            video: "视频文件",
+            pdf: "PDF文档"
+        };
+
         return {
             fileName,
             url,
-            type: "image",
-            content: `[图片文件] ${fileName}\n图片链接: ${url}\n请根据图片内容进行分析。`,
+            type: type as FileType,
+            content: `[${labels[type]}] ${fileName}\n文件链接: ${url}\n（需要配置 AI 才能解析此类型文件）`,
             success: true,
             metadata: { mimeType: this.guessMimeType(fileName) }
-        };
-    }
-
-    /**
-     * 解析 PDF
-     */
-    private async parsePDF(url: string, fileName: string): Promise<ParsedFile> {
-        const pdfConfig = this.config.pdf ?? {};
-        const enableAI = pdfConfig.enableAI !== false;
-
-        if (enableAI && this.aiProvider) {
-            try {
-                this.logger("info", `使用 AI 识别 PDF: ${fileName}`);
-                const result = await this.aiProvider.analyzeImage({
-                    imageUrl: url,
-                    prompt: pdfConfig.prompt || "请分析这个 PDF 文档的内容，提取关键信息。",
-                    maxTokens: 4000
-                });
-
-                return {
-                    fileName,
-                    url,
-                    type: "pdf",
-                    content: result.content,
-                    success: true,
-                    metadata: { mimeType: "application/pdf" }
-                };
-            } catch (error: any) {
-                this.logger("warn", `AI PDF 识别失败: ${error.message}`);
-            }
-        }
-
-        // 无 AI 或识别失败：返回链接
-        return {
-            fileName,
-            url,
-            type: "pdf",
-            content: `[PDF文档] ${fileName}\n文档链接: ${url}\n请查看并分析文档内容。`,
-            success: true,
-            metadata: { mimeType: "application/pdf" }
         };
     }
 
@@ -307,6 +360,8 @@ export class FileParser {
         const results: ParsedFile[] = [];
         const total = urls.length;
         let completed = 0;
+
+        this.logger("info", `开始批量解析 ${total} 个文件，并发数: ${concurrency}`);
 
         // 分批并发处理
         for (let i = 0; i < urls.length; i += concurrency) {
@@ -337,6 +392,9 @@ export class FileParser {
             }
         }
 
+        const successCount = results.filter((r) => r.success).length;
+        this.logger("info", `批量解析完成: ${successCount}/${total} 成功`);
+
         return results;
     }
 
@@ -357,7 +415,6 @@ export class FileParser {
                 if (onError === "error") {
                     throw new Error(`文件解析失败: ${file.fileName} - ${file.error}`);
                 }
-                // include: 包含错误信息
                 parts.push(`【${file.fileName}】解析失败: ${file.error}`);
                 continue;
             }
@@ -389,8 +446,15 @@ export class FileParser {
             csv: "表格",
             word: "文档",
             text: "文本",
-            image: "图片",
             pdf: "PDF",
+            json: "JSON",
+            yaml: "YAML",
+            xml: "XML",
+            html: "网页",
+            markdown: "Markdown",
+            image: "图片",
+            audio: "音频",
+            video: "视频",
             unknown: "文件"
         };
         return labels[type] || "文件";
@@ -402,23 +466,59 @@ export class FileParser {
     private guessMimeType(filename: string): string {
         const ext = path.extname(filename).toLowerCase();
         const mimeTypes: Record<string, string> = {
+            // 图片
             ".jpg": "image/jpeg",
             ".jpeg": "image/jpeg",
             ".png": "image/png",
             ".gif": "image/gif",
             ".webp": "image/webp",
             ".bmp": "image/bmp",
+            ".svg": "image/svg+xml",
+            ".ico": "image/x-icon",
+            // 文档
             ".pdf": "application/pdf",
             ".xlsx": "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
             ".xls": "application/vnd.ms-excel",
             ".csv": "text/csv",
             ".docx": "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
             ".doc": "application/msword",
-            ".txt": "text/plain"
+            ".txt": "text/plain",
+            // 数据
+            ".json": "application/json",
+            ".yaml": "text/yaml",
+            ".yml": "text/yaml",
+            ".xml": "application/xml",
+            ".html": "text/html",
+            ".htm": "text/html",
+            ".md": "text/markdown",
+            // 音频
+            ".mp3": "audio/mpeg",
+            ".wav": "audio/wav",
+            ".ogg": "audio/ogg",
+            ".m4a": "audio/m4a",
+            // 视频
+            ".mp4": "video/mp4",
+            ".avi": "video/x-msvideo",
+            ".mov": "video/quicktime",
+            ".webm": "video/webm"
         };
         return mimeTypes[ext] || "application/octet-stream";
+    }
+
+    /**
+     * 获取支持的文件格式列表
+     */
+    static getSupportedFormats(): { extension: string; type: FileType; method: string }[] {
+        return Object.entries(EXTENSION_MAP).map(([ext, type]) => {
+            let method = "本地解析";
+            if (["image", "audio", "video"].includes(type)) {
+                method = "AI 识别";
+            } else if (type === "pdf") {
+                method = "本地解析 / AI 降级";
+            }
+            return { extension: ext, type, method };
+        });
     }
 }
 
 export default FileParser;
-

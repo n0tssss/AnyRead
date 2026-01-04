@@ -37,6 +37,12 @@ export { parseExcel } from "./parsers/excel.js";
 export { parseCSV } from "./parsers/csv.js";
 export { parseWord } from "./parsers/word.js";
 export { parseText } from "./parsers/text.js";
+export { parsePDF } from "./parsers/pdf.js";
+export { parseJSON } from "./parsers/json.js";
+export { parseYAML } from "./parsers/yaml.js";
+export { parseXML } from "./parsers/xml.js";
+export { parseHTML } from "./parsers/html.js";
+export { parseMarkdown } from "./parsers/markdown.js";
 
 // ============ 便捷函数 ============
 
