@@ -3,10 +3,12 @@
  */
 
 import XLSX from "xlsx";
-import type { ParserConfig, ParsedFile } from "../types.js";
+import type { ParserConfig, ParsedFile, RawSheetData, RawOutput } from "../types.js";
 
 export interface ExcelParseResult {
     content: string;
+    /** raw 格式时返回结构化数据 */
+    rawData?: RawOutput;
     metadata: {
         sheetNames: string[];
         rowCount: number;
@@ -22,7 +24,8 @@ export function parseExcel(
     fileName: string,
     config?: ParserConfig["excel"]
 ): ExcelParseResult {
-    const maxRows = config?.maxRows ?? 500;
+    // maxRows 默认 -1 表示不限制，正数则限制行数
+    const maxRows = config?.maxRows ?? -1;
     const allSheets = config?.allSheets ?? true;
     const outputFormat = config?.outputFormat ?? "markdown";
 
@@ -33,6 +36,7 @@ export function parseExcel(
     let content = "";
     let totalRows = 0;
     let truncated = false;
+    const rawSheets: RawSheetData[] = [];
 
     for (const sheetName of sheetsToProcess) {
         const worksheet = workbook.Sheets[sheetName];
@@ -40,12 +44,30 @@ export function parseExcel(
 
         if (jsonData.length === 0) continue;
 
-        const rowsToInclude = Math.min(jsonData.length, maxRows);
-        if (jsonData.length > maxRows) {
+        // maxRows <= 0 表示不限制
+        const effectiveMaxRows = maxRows > 0 ? maxRows : jsonData.length;
+        const rowsToInclude = Math.min(jsonData.length, effectiveMaxRows);
+        if (maxRows > 0 && jsonData.length > maxRows) {
             truncated = true;
         }
 
-        if (outputFormat === "markdown") {
+        if (outputFormat === "raw") {
+            // raw 格式：返回结构化数据
+            const headers = (jsonData[0] || []).map((cell: any) => 
+                cell !== undefined && cell !== null ? String(cell).trim() : ""
+            );
+            const rows = jsonData.slice(1, rowsToInclude).map((row: any[]) => 
+                (row || []).map((cell: any) => cell)
+            );
+            rawSheets.push({
+                name: sheetName,
+                headers,
+                rows,
+                totalRows: jsonData.length - 1 // 不含表头
+            });
+            // raw 格式也生成简要的文本内容（用于日志或调试）
+            content += `【工作表: ${sheetName}】${headers.length} 列, ${jsonData.length - 1} 行\n`;
+        } else if (outputFormat === "markdown") {
             content += formatAsMarkdown(sheetName, jsonData, rowsToInclude);
         } else if (outputFormat === "json") {
             content += formatAsJSON(sheetName, jsonData, rowsToInclude);
@@ -58,6 +80,7 @@ export function parseExcel(
 
     return {
         content: content.trim(),
+        rawData: outputFormat === "raw" ? { sheets: rawSheets } : undefined,
         metadata: {
             sheetNames,
             rowCount: totalRows,

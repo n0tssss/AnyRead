@@ -18,6 +18,28 @@ export type FileType =
     | "unknown";   // 其他格式
 
 /**
+ * Raw 格式 - 单个工作表数据
+ */
+export interface RawSheetData {
+    /** 工作表名称 */
+    name: string;
+    /** 表头行（第一行） */
+    headers: string[];
+    /** 所有数据行（不含表头），二维数组 */
+    rows: any[][];
+    /** 总行数（不含表头） */
+    totalRows: number;
+}
+
+/**
+ * Raw 格式输出 - 用于表格文件的结构化数据
+ */
+export interface RawOutput {
+    /** 所有工作表数据 */
+    sheets: RawSheetData[];
+}
+
+/**
  * 文件解析结果
  */
 export interface ParsedFile {
@@ -33,6 +55,8 @@ export interface ParsedFile {
     success: boolean;
     /** 错误信息（如果失败） */
     error?: string;
+    /** raw 格式时的结构化数据（仅 excel/csv） */
+    rawData?: RawOutput;
     /** 元数据 */
     metadata?: {
         /** 文件大小（字节） */
@@ -134,22 +158,22 @@ export interface ParserConfig {
     
     /** Excel 解析配置 */
     excel?: {
-        /** 最大行数，默认 500 */
+        /** 最大行数，默认 -1（不限制），设置正数则限制行数 */
         maxRows?: number;
         /** 是否解析所有工作表，默认 true */
         allSheets?: boolean;
-        /** 输出格式：markdown | json | csv */
-        outputFormat?: "markdown" | "json" | "csv";
+        /** 输出格式：markdown | json | csv | raw */
+        outputFormat?: "markdown" | "json" | "csv" | "raw";
     };
     
     /** CSV 解析配置 */
     csv?: {
         /** 分隔符，默认 "," */
         delimiter?: string;
-        /** 最大行数，默认 500 */
+        /** 最大行数，默认 -1（不限制），设置正数则限制行数 */
         maxRows?: number;
-        /** 输出格式：markdown | json | csv */
-        outputFormat?: "markdown" | "json" | "csv";
+        /** 输出格式：markdown | json | csv | raw */
+        outputFormat?: "markdown" | "json" | "csv" | "raw";
     };
     
     /** 图片解析配置 */

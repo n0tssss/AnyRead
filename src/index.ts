@@ -15,7 +15,9 @@ export type {
     CustomAIConfig,
     ParserConfig,
     BatchParseOptions,
-    FormatOptions
+    FormatOptions,
+    RawSheetData,
+    RawOutput
 } from "./types.js";
 
 // 导出核心解析器

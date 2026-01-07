@@ -201,17 +201,20 @@ export class FileParser {
 
             let content = "";
             let metadata: ParsedFile["metadata"] = { size: buffer.length };
+            let rawData: ParsedFile["rawData"];
 
             switch (fileType) {
                 case "excel": {
                     const result = parseExcel(buffer, fileName, this.config.excel);
                     content = result.content;
+                    rawData = result.rawData;
                     metadata = { ...metadata, ...result.metadata };
                     break;
                 }
                 case "csv": {
                     const result = parseCSV(buffer, fileName, this.config.csv);
                     content = result.content;
+                    rawData = result.rawData;
                     metadata = { ...metadata, ...result.metadata };
                     break;
                 }
@@ -279,6 +282,7 @@ export class FileParser {
                 type: fileType,
                 content,
                 success: true,
+                rawData,
                 metadata
             };
         } catch (error: any) {

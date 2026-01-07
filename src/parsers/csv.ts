@@ -2,10 +2,12 @@
  * CSV 文件解析器
  */
 
-import type { ParserConfig } from "../types.js";
+import type { ParserConfig, RawSheetData, RawOutput } from "../types.js";
 
 export interface CSVParseResult {
     content: string;
+    /** raw 格式时返回结构化数据 */
+    rawData?: RawOutput;
     metadata: {
         rowCount: number;
         truncated: boolean;
@@ -21,7 +23,8 @@ export function parseCSV(
     config?: ParserConfig["csv"]
 ): CSVParseResult {
     const delimiter = config?.delimiter ?? ",";
-    const maxRows = config?.maxRows ?? 500;
+    // maxRows 默认 -1 表示不限制，正数则限制行数
+    const maxRows = config?.maxRows ?? -1;
     const outputFormat = config?.outputFormat ?? "markdown";
 
     const text = buffer.toString("utf8");
@@ -34,8 +37,10 @@ export function parseCSV(
         };
     }
 
-    const rowsToInclude = Math.min(lines.length, maxRows);
-    const truncated = lines.length > maxRows;
+    // maxRows <= 0 表示不限制
+    const effectiveMaxRows = maxRows > 0 ? maxRows : lines.length;
+    const rowsToInclude = Math.min(lines.length, effectiveMaxRows);
+    const truncated = maxRows > 0 && lines.length > maxRows;
 
     // 解析所有行
     const parsedRows: string[][] = [];
@@ -44,8 +49,23 @@ export function parseCSV(
     }
 
     let content = "";
+    let rawData: RawOutput | undefined;
 
-    if (outputFormat === "markdown") {
+    if (outputFormat === "raw") {
+        // raw 格式：返回结构化数据
+        const headers = parsedRows[0] || [];
+        const rows = parsedRows.slice(1);
+        rawData = {
+            sheets: [{
+                name: "CSV",
+                headers,
+                rows,
+                totalRows: rows.length
+            }]
+        };
+        // raw 格式也生成简要的文本内容
+        content = `【CSV】${headers.length} 列, ${rows.length} 行`;
+    } else if (outputFormat === "markdown") {
         content = formatAsMarkdown(parsedRows);
     } else if (outputFormat === "json") {
         content = formatAsJSON(parsedRows);
@@ -60,6 +80,7 @@ export function parseCSV(
 
     return {
         content: content.trim(),
+        rawData,
         metadata: {
             rowCount: rowsToInclude,
             truncated
