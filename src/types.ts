@@ -23,11 +23,11 @@ export type FileType =
 export interface RawSheetData {
     /** 工作表名称 */
     name: string;
-    /** 表头行（第一行） */
+    /** 表头行（raw 格式下为空数组，由调用方自行从 rows 中提取） */
     headers: string[];
-    /** 所有数据行（不含表头），二维数组 */
+    /** 全部行数据（二维数组），raw 格式下包含所有行（含表头行） */
     rows: any[][];
-    /** 总行数（不含表头） */
+    /** 总行数 */
     totalRows: number;
 }
 

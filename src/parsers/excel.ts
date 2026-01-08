@@ -52,21 +52,19 @@ export function parseExcel(
         }
 
         if (outputFormat === "raw") {
-            // raw 格式：返回结构化数据
-            const headers = (jsonData[0] || []).map((cell: any) => 
-                cell !== undefined && cell !== null ? String(cell).trim() : ""
-            );
-            const rows = jsonData.slice(1, rowsToInclude).map((row: any[]) => 
+            // raw 格式：全表原始数据，返回完整二维数组，不做任何预处理
+            // 调用方自行决定哪行是表头
+            const rows = jsonData.slice(0, rowsToInclude).map((row: any[]) => 
                 (row || []).map((cell: any) => cell)
             );
             rawSheets.push({
                 name: sheetName,
-                headers,
-                rows,
-                totalRows: jsonData.length - 1 // 不含表头
+                headers: [], // raw 格式不区分表头，由调用方自行处理
+                rows,        // 全部行数据（包含表头行）
+                totalRows: jsonData.length
             });
             // raw 格式也生成简要的文本内容（用于日志或调试）
-            content += `【工作表: ${sheetName}】${headers.length} 列, ${jsonData.length - 1} 行\n`;
+            content += `【工作表: ${sheetName}】${jsonData.length} 行\n`;
         } else if (outputFormat === "markdown") {
             content += formatAsMarkdown(sheetName, jsonData, rowsToInclude);
         } else if (outputFormat === "json") {
