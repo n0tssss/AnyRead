@@ -1,6 +1,6 @@
 {
   "name": "@n0ts123/anyread",
-  "version": "1.0.1",
+  "version": "1.0.2",
   "description": "读取任意文件格式 - Excel、CSV、Word、图片、PDF，本地解析 + AI 识别，支持并发",
   "main": "dist/index.js",
   "module": "dist/index.mjs",
