@@ -111,6 +111,52 @@ const result = await parser.parse('https://example.com/product.jpg');
 console.log(result.content); // AI 识别结果
 ```
 
+### 透传额外参数（如关闭思考）
+
+```typescript
+// 通义千问 Qwen - 关闭思考模式
+const parser = new FileParser({
+  ai: {
+    provider: 'openai', // Qwen 兼容 OpenAI 格式
+    apiKey: 'sk-xxx',
+    baseURL: 'https://dashscope.aliyuncs.com/compatible-mode/v1',
+    model: 'qwen3.5-plus',
+    extraParams: {
+      enable_thinking: false,  // 关闭思考
+      temperature: 0.7
+    }
+  }
+});
+
+// DeepSeek - 设置 temperature
+const parser = new FileParser({
+  ai: {
+    provider: 'openai',
+    apiKey: 'sk-xxx',
+    baseURL: 'https://api.deepseek.com/v1',
+    model: 'deepseek-chat',
+    extraParams: {
+      temperature: 0.5,
+      max_tokens: 4096
+    }
+  }
+});
+
+// OpenAI - 调整生成参数
+const parser = new FileParser({
+  ai: {
+    provider: 'openai',
+    apiKey: 'sk-xxx',
+    model: 'gpt-4o',
+    extraParams: {
+      temperature: 0.3,
+      top_p: 0.9,
+      frequency_penalty: 0.5
+    }
+  }
+});
+```
+
 ## 完整配置
 
 ```typescript
@@ -126,7 +172,12 @@ const config: ParserConfig = {
     visionModel: 'gpt-4o', // 可选，图片识别专用模型
     timeout: 60000,
     maxRetries: 3,
-    headers: {}
+    headers: {},
+    // 额外参数 - 透传给 AI 提供商（如 enable_thinking、temperature 等）
+    extraParams: {
+      enable_thinking: false,  // 关闭 Qwen 思考
+      temperature: 0.7
+    }
   },
 
   // 下载配置
@@ -205,7 +256,7 @@ parseAndFormat(urls: string[], formatOptions?: FormatOptions, config?: ParserCon
 ### 类型定义
 
 ```typescript
-type FileType = 
+type FileType =
   | 'excel' | 'csv' | 'word' | 'text' | 'pdf'
   | 'json' | 'yaml' | 'xml' | 'html' | 'markdown'
   | 'image' | 'audio' | 'video' | 'unknown';
@@ -224,6 +275,19 @@ interface ParsedFile {
     rowCount?: number;
     truncated?: boolean;
   };
+}
+
+interface AIConfig {
+  provider: 'openai' | 'gemini' | 'anthropic' | 'custom';
+  apiKey: string;
+  baseURL?: string;
+  model?: string;
+  visionModel?: string;
+  timeout?: number;
+  maxRetries?: number;
+  headers?: Record<string, string>;
+  /** 额外参数 - 透传给 AI 提供商（如 enable_thinking、temperature 等） */
+  extraParams?: Record<string, unknown>;
 }
 
 interface BatchParseOptions {

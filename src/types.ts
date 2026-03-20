@@ -97,6 +97,8 @@ export interface AIConfig {
     maxRetries?: number;
     /** 自定义请求头 */
     headers?: Record<string, string>;
+    /** 额外参数（透传给 AI 提供商，如 enable_thinking、temperature 等） */
+    extraParams?: Record<string, unknown>;
 }
 
 /**

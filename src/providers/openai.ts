@@ -47,7 +47,7 @@ export class OpenAIProvider extends AIProvider {
         const prompt = request.prompt || DEFAULT_PROMPT;
         const maxRetries = this.config.maxRetries || 3;
 
-        const body = {
+        const body: Record<string, unknown> = {
             model,
             messages: [
                 {
@@ -68,7 +68,9 @@ export class OpenAIProvider extends AIProvider {
                     ]
                 }
             ],
-            max_tokens: request.maxTokens || 2000
+            max_tokens: request.maxTokens || 2000,
+            // 透传额外参数（如 enable_thinking、temperature 等）
+            ...this.config.extraParams
         };
 
         let lastError: Error | null = null;
